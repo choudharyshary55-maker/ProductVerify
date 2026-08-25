@@ -732,6 +732,7 @@
 
     <!-- =========================
          JAVASCRIPT
+         LIVE RENDER API
     ========================= -->
 
     <script>
@@ -739,22 +740,22 @@
 
         /*
         ==========================================
-        PRODUCTVERIFY API
+        LIVE PRODUCTVERIFY API
         ==========================================
         */
 
         const API_URL =
-            "http://127.0.0.1:8000";
+            "https://productverify-5.onrender.com";
 
 
         /*
         ==========================================
-        LOCAL NETWORK URL
+        LIVE FRONTEND URL
         ==========================================
         */
 
-        const FRONTEND_NETWORK_URL =
-            "http://172.20.10.3:5500";
+        const FRONTEND_URL =
+            window.location.origin;
 
 
         /*
@@ -780,6 +781,7 @@
                 const response =
                     await fetch(API_URL);
 
+
                 if (response.ok) {
 
                     statusDot.style.background =
@@ -788,7 +790,9 @@
                     statusText.innerText =
                         "Server Online";
 
-                } else {
+                }
+
+                else {
 
                     statusDot.style.background =
                         "#ef4444";
@@ -798,7 +802,14 @@
 
                 }
 
-            } catch (error) {
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Server Check Error:",
+                    error
+                );
 
                 statusDot.style.background =
                     "#ef4444";
@@ -864,6 +875,10 @@
                 );
 
 
+            /*
+            EMPTY CODE
+            */
+
             if (!code) {
 
                 result.style.display =
@@ -889,6 +904,10 @@
             }
 
 
+            /*
+            START VERIFICATION
+            */
+
             button.disabled = true;
 
             button.innerText =
@@ -908,7 +927,7 @@
                 "Verifying Product...";
 
             resultMessage.innerText =
-                "Please wait while we check the database.";
+                "Please wait while we check the ProductVerify database.";
 
             backendResult.innerHTML =
                 "";
@@ -924,25 +943,29 @@
                     );
 
 
-                const html =
+                const responseHTML =
                     await response.text();
 
 
                 console.log(
-                    "Backend Response:",
-                    html
+                    "ProductVerify Response:",
+                    responseHTML
                 );
 
 
+                /*
+                AUTHENTIC PRODUCT
+                */
+
                 if (
 
-                    html.includes(
+                    responseHTML.includes(
                         "AUTHENTIC PRODUCT"
                     )
 
                     ||
 
-                    html.includes(
+                    responseHTML.includes(
                         "PRODUCT VERIFIED"
                     )
 
@@ -961,14 +984,18 @@
                         "This product has been successfully verified.";
 
                     backendResult.innerHTML =
-                        html;
+                        responseHTML;
 
                 }
 
 
+                /*
+                PRODUCT NOT FOUND
+                */
+
                 else if (
 
-                    html.includes(
+                    responseHTML.includes(
                         "PRODUCT NOT VERIFIED"
                     )
 
@@ -987,10 +1014,14 @@
                         "This product code was not found in the ProductVerify database.";
 
                     backendResult.innerHTML =
-                        html;
+                        responseHTML;
 
                 }
 
+
+                /*
+                UNKNOWN RESPONSE
+                */
 
                 else {
 
@@ -1004,10 +1035,10 @@
                         "Verification Result";
 
                     resultMessage.innerText =
-                        "The server returned a response.";
+                        "The server returned an unexpected response.";
 
                     backendResult.innerHTML =
-                        html;
+                        responseHTML;
 
                 }
 
@@ -1020,6 +1051,7 @@
                     "Verification Error:",
                     error
                 );
+
 
                 result.style.display =
                     "block";
@@ -1091,6 +1123,10 @@
                 );
 
 
+            /*
+            CODE REQUIRED
+            */
+
             if (!code) {
 
                 alert(
@@ -1111,11 +1147,11 @@
 
 
             /*
-            CREATE PHONE-ACCESSIBLE URL
+            LIVE FRONTEND URL
             */
 
             const verificationURL =
-                FRONTEND_NETWORK_URL
+                FRONTEND_URL
                 +
                 "/?code="
                 +
@@ -1268,7 +1304,8 @@
 
             document.getElementById(
                 "productCode"
-            ).value = qrCode;
+            ).value =
+                qrCode;
 
             verifyProduct();
 
