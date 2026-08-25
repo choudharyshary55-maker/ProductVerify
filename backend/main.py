@@ -116,6 +116,7 @@ def verify_product(product_code: str):
 
         brand, product_name, batch_number, status = product
 
+        # Prevent HTML injection
         brand = html.escape(str(brand))
         product_name = html.escape(str(product_name))
         batch_number = html.escape(str(batch_number))
