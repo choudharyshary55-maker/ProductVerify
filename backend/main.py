@@ -27,8 +27,38 @@ app.add_middleware(
 # ==========================================
 
 BASE_DIR = Path(__file__).resolve().parent
-
 DATABASE_PATH = BASE_DIR / "products.db"
+
+
+# ==========================================
+# DATABASE INITIALIZATION
+# ==========================================
+
+def initialize_database():
+
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_code TEXT UNIQUE NOT NULL,
+            brand TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            batch_number TEXT NOT NULL,
+            status TEXT NOT NULL
+        )
+        """
+    )
+
+    connection.commit()
+    connection.close()
+
+
+# Initialize database when application starts
+initialize_database()
 
 
 # ==========================================
@@ -56,9 +86,7 @@ def verify_product(product_code: str):
 
     product_code = product_code.strip()
 
-    connection = sqlite3.connect(
-        DATABASE_PATH
-    )
+    connection = sqlite3.connect(DATABASE_PATH)
 
     cursor = connection.cursor()
 
@@ -88,14 +116,11 @@ def verify_product(product_code: str):
 
         brand, product_name, batch_number, status = product
 
-
-        # Prevent HTML injection
         brand = html.escape(str(brand))
         product_name = html.escape(str(product_name))
         batch_number = html.escape(str(batch_number))
         status = html.escape(str(status))
         product_code = html.escape(product_code)
-
 
         return f"""
         <div class="backend-card">
