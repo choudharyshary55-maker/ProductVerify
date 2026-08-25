@@ -40,6 +40,7 @@ def initialize_database():
 
     cursor = connection.cursor()
 
+    # Create products table
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS products (
@@ -51,6 +52,22 @@ def initialize_database():
             status TEXT NOT NULL
         )
         """
+    )
+
+    # Add first test product
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO products
+        (product_code, brand, product_name, batch_number, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "PV-000001",
+            "XYZ Cosmetics",
+            "Face Serum 30ml",
+            "FS26001",
+            "VERIFIED"
+        )
     )
 
     connection.commit()
