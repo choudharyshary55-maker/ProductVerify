@@ -1,14 +1,25 @@
-import sqlite3
+import os
 import uuid
 import qrcode
+import psycopg2
 from pathlib import Path
+
+# ==========================================
+# PATH
+# ==========================================
+
+BASE_DIR = Path(__file__).resolve().parent
 
 # ==========================================
 # DATABASE
 # ==========================================
 
-BASE_DIR = Path(__file__).resolve().parent
-DATABASE_PATH = BASE_DIR / "products.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL is not set."
+    )
 
 # ==========================================
 # PRODUCT DETAILS
@@ -17,6 +28,11 @@ DATABASE_PATH = BASE_DIR / "products.db"
 brand = input("Enter Brand Name: ").strip()
 product_name = input("Enter Product Name: ").strip()
 batch_number = input("Enter Batch Number: ").strip()
+
+if not brand or not product_name or not batch_number:
+    raise ValueError(
+        "Brand, Product Name and Batch Number are required."
+    )
 
 # ==========================================
 # AUTOMATIC PRODUCT CODE
@@ -28,13 +44,13 @@ product_code = "PV-" + str(uuid.uuid4())[:8].upper()
 # DATABASE INSERT
 # ==========================================
 
-connection = sqlite3.connect(DATABASE_PATH)
+connection = psycopg2.connect(DATABASE_URL)
 cursor = connection.cursor()
 
 cursor.execute(
     """
     CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         product_code TEXT UNIQUE NOT NULL,
         brand TEXT NOT NULL,
         product_name TEXT NOT NULL,
@@ -48,7 +64,7 @@ cursor.execute(
     """
     INSERT INTO products
     (product_code, brand, product_name, batch_number, status)
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (%s, %s, %s, %s, %s)
     """,
     (
         product_code,
@@ -60,6 +76,8 @@ cursor.execute(
 )
 
 connection.commit()
+
+cursor.close()
 connection.close()
 
 # ==========================================
@@ -67,7 +85,7 @@ connection.close()
 # ==========================================
 
 verification_url = (
-    f"https://productverify-7.onrender.com/?code={product_code}"
+    f"https://productverify.onrender.com/verify/{product_code}"
 )
 
 # ==========================================

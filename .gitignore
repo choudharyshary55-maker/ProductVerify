@@ -2,4 +2,6 @@ backend/products.db
 backend/__pycache__/
 __pycache__/
 *.pyc
-.env
+.envbackend/main_backup.py
+backend/*.png
+main_backup.py
