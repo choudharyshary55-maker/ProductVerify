@@ -1,18 +1,48 @@
 import sqlite3
 import uuid
 import qrcode
+from pathlib import Path
 
-# Product details
-brand = input("Enter Brand Name: ")
-product_name = input("Enter Product Name: ")
-batch_number = input("Enter Batch Number: ")
+# ==========================================
+# DATABASE
+# ==========================================
 
-# Automatic Product Code
+BASE_DIR = Path(__file__).resolve().parent
+DATABASE_PATH = BASE_DIR / "products.db"
+
+# ==========================================
+# PRODUCT DETAILS
+# ==========================================
+
+brand = input("Enter Brand Name: ").strip()
+product_name = input("Enter Product Name: ").strip()
+batch_number = input("Enter Batch Number: ").strip()
+
+# ==========================================
+# AUTOMATIC PRODUCT CODE
+# ==========================================
+
 product_code = "PV-" + str(uuid.uuid4())[:8].upper()
 
-# Database
-connection = sqlite3.connect("products.db")
+# ==========================================
+# DATABASE INSERT
+# ==========================================
+
+connection = sqlite3.connect(DATABASE_PATH)
 cursor = connection.cursor()
+
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_code TEXT UNIQUE NOT NULL,
+        brand TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        batch_number TEXT NOT NULL,
+        status TEXT NOT NULL
+    )
+    """
+)
 
 cursor.execute(
     """
@@ -32,16 +62,26 @@ cursor.execute(
 connection.commit()
 connection.close()
 
-# ProductVerify frontend URL
+# ==========================================
+# LIVE PRODUCTVERIFY URL
+# ==========================================
+
 verification_url = (
-    f"http://172.20.10.3:5500/index.html?code={product_code}"
+    f"https://productverify-7.onrender.com/?code={product_code}"
 )
 
-# Generate QR Code
+# ==========================================
+# GENERATE QR CODE
+# ==========================================
+
 qr = qrcode.make(verification_url)
 
-qr_file = f"{product_code}.png"
+qr_file = BASE_DIR / f"{product_code}.png"
 qr.save(qr_file)
+
+# ==========================================
+# RESULT
+# ==========================================
 
 print("\n========== PRODUCT ADDED ==========")
 print("Product Code:", product_code)

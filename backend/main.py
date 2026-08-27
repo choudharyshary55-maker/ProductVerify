@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pathlib import Path
-import sqlite3
+import os
+import psycopg2
 import html
 
 
@@ -23,11 +23,17 @@ app.add_middleware(
 
 
 # ==========================================
-# DATABASE PATH
+# DATABASE CONNECTION
 # ==========================================
 
-BASE_DIR = Path(__file__).resolve().parent
-DATABASE_PATH = BASE_DIR / "products.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+def get_connection():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL environment variable is not set")
+
+    return psycopg2.connect(DATABASE_URL)
 
 
 # ==========================================
@@ -36,15 +42,13 @@ DATABASE_PATH = BASE_DIR / "products.db"
 
 def initialize_database():
 
-    connection = sqlite3.connect(DATABASE_PATH)
-
+    connection = get_connection()
     cursor = connection.cursor()
 
-    # Create products table
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             product_code TEXT UNIQUE NOT NULL,
             brand TEXT NOT NULL,
             product_name TEXT NOT NULL,
@@ -54,12 +58,12 @@ def initialize_database():
         """
     )
 
-    # Add first test product
     cursor.execute(
         """
-        INSERT OR IGNORE INTO products
+        INSERT INTO products
         (product_code, brand, product_name, batch_number, status)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (product_code) DO NOTHING
         """,
         (
             "PV-000001",
@@ -71,6 +75,7 @@ def initialize_database():
     )
 
     connection.commit()
+    cursor.close()
     connection.close()
 
 
@@ -87,7 +92,7 @@ def home():
 
     return {
         "message": "ProductVerify API is running!",
-        "database": "connected"
+        "database": "PostgreSQL connected"
     }
 
 
@@ -103,8 +108,7 @@ def verify_product(product_code: str):
 
     product_code = product_code.strip()
 
-    connection = sqlite3.connect(DATABASE_PATH)
-
+    connection = get_connection()
     cursor = connection.cursor()
 
     cursor.execute(
@@ -115,13 +119,14 @@ def verify_product(product_code: str):
             batch_number,
             status
         FROM products
-        WHERE product_code = ?
+        WHERE product_code = %s
         """,
         (product_code,)
     )
 
     product = cursor.fetchone()
 
+    cursor.close()
     connection.close()
 
 
@@ -133,7 +138,6 @@ def verify_product(product_code: str):
 
         brand, product_name, batch_number, status = product
 
-        # Prevent HTML injection
         brand = html.escape(str(brand))
         product_name = html.escape(str(product_name))
         batch_number = html.escape(str(batch_number))
@@ -144,7 +148,7 @@ def verify_product(product_code: str):
         <div class="backend-card">
 
             <div class="success-icon">
-                ✓
+                ?
             </div>
 
             <div class="verified-badge">
@@ -186,7 +190,7 @@ def verify_product(product_code: str):
             </div>
 
             <div class="verification-message">
-                ✓ This product has been successfully verified
+                ? This product has been successfully verified
                 by ProductVerify.
             </div>
 
